@@ -2,143 +2,727 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>2025 可編輯行事曆</title>
+  <title>資產／費用記帳管家</title>
   <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --accent: #22c55e;
+      --accent-weak: #86efac;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --danger: #ef4444;
+      --shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
     body {
-      font-family: sans-serif;
-      margin: 20px;
+      margin: 0;
+      font-family: "Inter", "Noto Sans TC", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.08), transparent 30%),
+                  radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.08), transparent 25%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px;
     }
-    h1 {
-      text-align: center;
+
+    h1, h2, h3 { margin: 0 0 8px; color: #fff; }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(14, 165, 233, 0.2));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 24px;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
     }
-    .month {
-      margin: 30px 0;
-    }
-    .month-name {
-      font-size: 24px;
-      margin-bottom: 10px;
-    }
-    .calendar {
+
+    .hero p { margin: 6px 0; color: var(--muted); }
+
+    .grid {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 1px;
-      background: #ccc;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
     }
-    .day {
-      background: #fff;
-      min-height: 100px;
-      padding: 5px;
-      display: flex;
-      flex-direction: column;
+
+    .panel {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel.highlight { border-color: rgba(34, 197, 94, 0.35); }
+
+    label { display: block; margin-bottom: 6px; color: var(--muted); }
+    input, select, button, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(15, 23, 42, 0.65);
+      color: #fff;
+      font-size: 14px;
+      transition: border-color 0.2s ease, transform 0.1s ease;
+    }
+
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-weak); }
+    button { cursor: pointer; font-weight: 700; letter-spacing: 0.3px; }
+    button.primary { background: linear-gradient(135deg, #22c55e, #14b8a6); border: none; }
+    button.secondary { background: rgba(255, 255, 255, 0.08); }
+    button.danger { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); }
+
+    .stack { display: grid; gap: 10px; }
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
       font-size: 14px;
     }
-    .day.holiday {
-      background: #ffe5e5;
+
+    th, td {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 10px 6px;
+      text-align: left;
     }
-    .day-header {
-      font-weight: bold;
+
+    th { color: #cbd5e1; font-weight: 700; }
+    td small { color: var(--muted); }
+
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 999px; font-size: 12px; }
+    .badge.asset { background: rgba(34, 197, 94, 0.15); color: #a7f3d0; }
+    .badge.expense { background: rgba(248, 113, 113, 0.15); color: #fecdd3; }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 12px; }
+    .pill {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
-    textarea {
-      flex-grow: 1;
-      resize: none;
-      border: none;
-      margin-top: 5px;
-      font-family: sans-serif;
-      font-size: 13px;
+
+    .pill strong { display: block; font-size: 28px; margin-top: 6px; color: #fff; }
+
+    .footer { color: var(--muted); font-size: 13px; margin-top: 18px; }
+
+    .status { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+    .table-actions { display: flex; gap: 6px; }
+    .mini-input { width: 110px; }
+
+    .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    @media (max-width: 640px) {
+      body { padding: 14px; }
+      table { font-size: 12px; }
+      .mini-input { width: 100%; }
+      .table-actions { flex-direction: column; }
     }
   </style>
 </head>
 <body>
-  <h1>2025 可編輯個人行事曆</h1>
-  <div id="calendar"></div>
+  <header class="hero">
+    <h1>資產／費用記帳管家</h1>
+    <p>清楚區分「資產」與「費用」，支援銀行帳戶、股票、外幣與押金，並可嘗試抓取最新行情估值。</p>
+    <p class="hint">資產：可回收的金流（銀行餘額、股票、ETF、押金、可退貨款）。費用：實際支出（食衣住行育樂、學習、訂閱等）。</p>
+  </header>
+
+  <div class="grid">
+    <section class="panel highlight">
+      <h2>快速概覽</h2>
+      <div class="summary-grid">
+        <div class="pill">
+          <div>資產總額</div>
+          <strong id="assetTotal">–</strong>
+          <div class="hint">含銀行餘額、押金、股票與外幣估值</div>
+        </div>
+        <div class="pill">
+          <div>費用累計</div>
+          <strong id="expenseTotal">–</strong>
+          <div class="hint">依您輸入的費用類別與內容</div>
+        </div>
+        <div class="pill">
+          <div>淨值（資產 − 費用）</div>
+          <strong id="netWorth">–</strong>
+          <div class="hint">用來快速了解財務現況</div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px; align-items:end;">
+        <div class="stack">
+          <label for="baseCurrency">顯示幣別</label>
+          <select id="baseCurrency">
+            <option value="TWD">TWD 新台幣</option>
+            <option value="USD">USD 美元</option>
+            <option value="JPY">JPY 日圓</option>
+            <option value="EUR">EUR 歐元</option>
+          </select>
+          <p class="hint">金額僅以單一幣別格式化顯示，未自動換算匯率。</p>
+        </div>
+        <div class="stack">
+          <button class="primary" id="refreshAll">批次嘗試更新有行情代號的資產價格</button>
+          <p class="hint">若網路限制導致即時行情失敗，系統會 fallback 到示範價或維持原價。</p>
+        </div>
+      </div>
+      <div class="status" id="status">狀態：等待操作</div>
+    </section>
+
+    <section class="panel">
+      <h3>新增現金／銀行資產</h3>
+      <form id="cashForm" class="stack">
+        <div class="row">
+          <div class="stack">
+            <label for="cashName">帳戶名稱</label>
+            <input id="cashName" name="cashName" required placeholder="例：台銀薪資帳戶" />
+          </div>
+          <div class="stack">
+            <label for="cashType">種類</label>
+            <select id="cashType" name="cashType">
+              <option value="bank">銀行帳戶</option>
+              <option value="cash">現金</option>
+              <option value="deposit">押金／可退貨款</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="stack">
+            <label for="cashCurrency">幣別</label>
+            <input id="cashCurrency" name="cashCurrency" value="TWD" />
+          </div>
+          <div class="stack">
+            <label for="cashAmount">金額</label>
+            <input id="cashAmount" name="cashAmount" type="number" step="0.01" min="0" required />
+          </div>
+        </div>
+        <button class="primary" type="submit">加入資產</button>
+      </form>
+      <p class="hint">這裡適合輸入初始各個銀行帳戶、押金與可退貨款，均視為資產。</p>
+    </section>
+
+    <section class="panel">
+      <h3>新增投資／外幣資產</h3>
+      <form id="investmentForm" class="stack">
+        <div class="row">
+          <div class="stack">
+            <label for="assetName">資產名稱</label>
+            <input id="assetName" name="assetName" required placeholder="例：VTI、美元存款" />
+          </div>
+          <div class="stack">
+            <label for="assetClass">分類</label>
+            <select id="assetClass" name="assetClass">
+              <option value="stock">股票／ETF</option>
+              <option value="fx">外幣</option>
+              <option value="other">其他可回收資產</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="stack">
+            <label for="assetSymbol">行情代號</label>
+            <input id="assetSymbol" name="assetSymbol" placeholder="股票請輸入代號，外幣請輸入 USD/TWD" />
+            <p class="hint">填入代號後可嘗試自動抓價；不填則僅使用手動價格。</p>
+          </div>
+          <div class="stack">
+            <label for="assetCurrency">資產幣別</label>
+            <input id="assetCurrency" name="assetCurrency" value="TWD" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="stack">
+            <label for="quantity">持有數量</label>
+            <input id="quantity" name="quantity" type="number" step="0.0001" min="0" required />
+          </div>
+          <div class="stack">
+            <label for="manualPrice">單位價格（可留空，等候自動抓價）</label>
+            <input id="manualPrice" name="manualPrice" type="number" step="0.0001" placeholder="例：150.35" />
+          </div>
+        </div>
+        <div class="row">
+          <button class="primary" type="submit">加入資產並估值</button>
+          <button class="secondary" type="button" id="tryFetch">僅嘗試抓取價格</button>
+        </div>
+      </form>
+      <p class="hint">股票／ETF、押金、外幣等可回收的支出都列為「資產」並計入總額。</p>
+    </section>
+
+    <section class="panel">
+      <h3>新增費用</h3>
+      <form id="expenseForm" class="stack">
+        <div class="row">
+          <div class="stack">
+            <label for="expenseDate">日期</label>
+            <input id="expenseDate" name="expenseDate" type="date" required />
+          </div>
+          <div class="stack">
+            <label for="expenseCategory">費用類別</label>
+            <input id="expenseCategory" name="expenseCategory" placeholder="例：餐飲、交通、娛樂" required />
+          </div>
+        </div>
+        <div class="stack">
+          <label for="expenseDesc">費用內容</label>
+          <input id="expenseDesc" name="expenseDesc" placeholder="例：晚餐、Uber、訂閱" required />
+        </div>
+        <div class="row">
+          <div class="stack">
+            <label for="expenseAmount">金額</label>
+            <input id="expenseAmount" name="expenseAmount" type="number" min="0" step="0.01" required />
+          </div>
+          <div class="stack">
+            <label for="expenseCurrency">幣別</label>
+            <input id="expenseCurrency" name="expenseCurrency" value="TWD" />
+          </div>
+        </div>
+        <button class="primary" type="submit">記錄費用</button>
+      </form>
+      <p class="hint">費用僅紀錄支出，不影響資產估值。</p>
+    </section>
+
+    <section class="panel" style="grid-column: 1 / -1;">
+      <div style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <h3>資產明細</h3>
+        <button class="secondary" id="clearAssets">清空所有資產（謹慎使用）</button>
+      </div>
+      <table id="assetTable">
+        <thead>
+          <tr>
+            <th>名稱</th>
+            <th>分類</th>
+            <th>代號／帳戶</th>
+            <th>數量／餘額</th>
+            <th>單價</th>
+            <th>估值</th>
+            <th>幣別</th>
+            <th>更新時間</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="panel" style="grid-column: 1 / -1;">
+      <div style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <h3>費用明細</h3>
+        <button class="secondary" id="clearExpenses">清空費用紀錄</button>
+      </div>
+      <table id="expenseTable">
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>類別</th>
+            <th>內容</th>
+            <th>金額</th>
+            <th>幣別</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+
+  <p class="footer">資料儲存在瀏覽器 localStorage；即時行情若因網路限制失敗，請改用手動價格或允許可連外的環境再試。</p>
 
   <script>
-    const calendarEl = document.getElementById('calendar');
-    const extraHolidays = [
-      "2025-01-01",
-      "2025-01-25", "2025-01-26", "2025-01-27", "2025-01-28", "2025-01-29", "2025-01-30", "2025-01-31",
-      "2025-02-01", "2025-02-02",
-      "2025-02-28", "2025-03-01", "2025-03-02",
-      "2025-04-03", "2025-04-04", "2025-04-05", "2025-04-06",
-      "2025-05-01",
-      "2025-05-30", "2025-05-31", "2025-06-01",
-      "2025-10-04", "2025-10-05", "2025-10-06",
-      "2025-10-10", "2025-10-11", "2025-10-12",
-      "2025-02-08", "2025-06-13", "2025-07-18", "2025-08-15", "2025-09-12", "2025-11-07", "2025-12-31"
-    ];
+    const assetTableBody = document.querySelector('#assetTable tbody');
+    const expenseTableBody = document.querySelector('#expenseTable tbody');
+    const assetTotalEl = document.getElementById('assetTotal');
+    const expenseTotalEl = document.getElementById('expenseTotal');
+    const netWorthEl = document.getElementById('netWorth');
+    const baseCurrencyEl = document.getElementById('baseCurrency');
+    const statusEl = document.getElementById('status');
 
-    function isWeekend(year, month, day) {
-      const date = new Date(year, month - 1, day);
-      return date.getDay() === 0 || date.getDay() === 6;
+    const cashForm = document.getElementById('cashForm');
+    const investmentForm = document.getElementById('investmentForm');
+    const expenseForm = document.getElementById('expenseForm');
+    const tryFetchBtn = document.getElementById('tryFetch');
+    const refreshAllBtn = document.getElementById('refreshAll');
+    const clearAssetsBtn = document.getElementById('clearAssets');
+    const clearExpensesBtn = document.getElementById('clearExpenses');
+
+    const storageKey = 'bookkeeping-state-v1';
+    const demoPrices = {
+      stock: { AAPL: 190.42, TSLA: 245.11, TSM: 160.0, VTI: 251.5 },
+      fx: { 'USD/TWD': 32.2, 'USD/JPY': 147.4, 'EUR/USD': 1.09 }
+    };
+
+    const initialState = () => ({ assets: [], expenses: [] });
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return initialState();
+        const parsed = JSON.parse(raw);
+        return {
+          assets: Array.isArray(parsed.assets) ? parsed.assets : [],
+          expenses: Array.isArray(parsed.expenses) ? parsed.expenses : []
+        };
+      } catch (err) {
+        console.error('讀取資料失敗', err);
+        return initialState();
+      }
     }
 
-    function loadNote(dateStr) {
-      return localStorage.getItem('note-' + dateStr) || '';
+    let state = loadState();
+
+    function persist() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      render();
     }
 
-    function saveNote(dateStr, value) {
-      localStorage.setItem('note-' + dateStr, value);
+    function formatCurrency(amount, currency) {
+      if (amount === undefined || amount === null || Number.isNaN(amount)) return '–';
+      const safeCurrency = currency || baseCurrencyEl.value || 'TWD';
+      try {
+        return new Intl.NumberFormat('zh-Hant', { style: 'currency', currency: safeCurrency }).format(Number(amount));
+      } catch (err) {
+        return `${amount.toFixed(2)} ${safeCurrency}`;
+      }
     }
 
-    function createMonth(month, year) {
-      const firstDay = new Date(year, month - 1, 1);
-      const lastDay = new Date(year, month, 0);
-      const totalDays = lastDay.getDate();
-      const offset = firstDay.getDay();
+    function setStatus(message) {
+      const now = new Date();
+      statusEl.textContent = `狀態（${now.toLocaleTimeString('zh-TW')}）：${message}`;
+    }
 
-      const monthDiv = document.createElement('div');
-      monthDiv.className = 'month';
+    function calculateAssetValue(asset) {
+      if (asset.kind === 'cash') return Number(asset.amount || 0);
+      const qty = Number(asset.quantity || 0);
+      const price = Number(asset.pricePerUnit || 0);
+      return qty * price;
+    }
 
-      const title = document.createElement('div');
-      title.className = 'month-name';
-      title.textContent = `${year}年 ${month}月`;
-      monthDiv.appendChild(title);
-
-      const cal = document.createElement('div');
-      cal.className = 'calendar';
-
-      ['日', '一', '二', '三', '四', '五', '六'].forEach(day => {
-        const header = document.createElement('div');
-        header.className = 'day day-header';
-        header.textContent = day;
-        cal.appendChild(header);
+    function renderAssets() {
+      assetTableBody.innerHTML = '';
+      state.assets.forEach(asset => {
+        const tr = document.createElement('tr');
+        const value = calculateAssetValue(asset);
+        tr.innerHTML = `
+          <td>${asset.name}<br /><small>${asset.kind === 'cash' ? '現金／銀行' : '投資／外幣'}</small></td>
+          <td><span class="badge asset">${asset.type}</span></td>
+          <td>${asset.symbol || '—'}<br /><small>${asset.account || ''}</small></td>
+          <td>
+            ${asset.kind === 'cash'
+              ? formatCurrency(Number(asset.amount || 0), asset.currency)
+              : `${Number(asset.quantity || 0)} 單位`}
+          </td>
+          <td>
+            ${asset.kind === 'investment'
+              ? `<input class="mini-input price-input" type="number" step="0.0001" data-id="${asset.id}" value="${asset.pricePerUnit ?? ''}" placeholder="單價" />` 
+              : '—'}
+          </td>
+          <td>${formatCurrency(value, asset.currency)}</td>
+          <td>${asset.currency || 'TWD'}</td>
+          <td>${asset.updatedAt ? new Date(asset.updatedAt).toLocaleString('zh-TW') : '—'}</td>
+          <td>
+            <div class="table-actions">
+              ${asset.kind === 'investment' && asset.symbol ? `<button data-action="fetch" data-id="${asset.id}" class="secondary">抓取價格</button>` : ''}
+              ${asset.kind === 'investment' ? `<button data-action="applyPrice" data-id="${asset.id}" class="secondary">套用價格</button>` : ''}
+              <button data-action="remove" data-id="${asset.id}" class="danger">刪除</button>
+            </div>
+          </td>
+        `;
+        assetTableBody.appendChild(tr);
       });
+    }
 
-      for (let i = 0; i < offset; i++) {
-        const empty = document.createElement('div');
-        empty.className = 'day';
-        cal.appendChild(empty);
+    function renderExpenses() {
+      expenseTableBody.innerHTML = '';
+      state.expenses.forEach(exp => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${exp.date}</td>
+          <td><span class="badge expense">${exp.category}</span></td>
+          <td>${exp.description}</td>
+          <td>${formatCurrency(Number(exp.amount || 0), exp.currency)}</td>
+          <td>${exp.currency || 'TWD'}</td>
+          <td><button data-action="remove-expense" data-id="${exp.id}" class="danger">刪除</button></td>
+        `;
+        expenseTableBody.appendChild(tr);
+      });
+    }
+
+    function renderSummary() {
+      const totalAssets = state.assets.reduce((sum, a) => sum + calculateAssetValue(a), 0);
+      const totalExpenses = state.expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+      assetTotalEl.textContent = formatCurrency(totalAssets, baseCurrencyEl.value);
+      expenseTotalEl.textContent = formatCurrency(totalExpenses, baseCurrencyEl.value);
+      netWorthEl.textContent = formatCurrency(totalAssets - totalExpenses, baseCurrencyEl.value);
+    }
+
+    function render() {
+      renderAssets();
+      renderExpenses();
+      renderSummary();
+    }
+
+    function randomId() { return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(16).slice(2); }
+
+    function addCashAsset(formData) {
+      const asset = {
+        id: randomId(),
+        name: formData.get('cashName'),
+        type: formData.get('cashType') || 'bank',
+        kind: 'cash',
+        amount: Number(formData.get('cashAmount')),
+        currency: formData.get('cashCurrency') || 'TWD',
+        account: formData.get('cashName'),
+        updatedAt: Date.now()
+      };
+      state.assets.push(asset);
+      persist();
+      setStatus(`已新增資產「${asset.name}」`);
+    }
+
+    async function addInvestmentAsset(formData, fetchPriceFirst = true) {
+      const quantity = Number(formData.get('quantity'));
+      const manualPriceRaw = formData.get('manualPrice');
+      const manualPrice = manualPriceRaw === '' ? null : Number(manualPriceRaw);
+      const assetClass = formData.get('assetClass') || 'stock';
+      const symbol = (formData.get('assetSymbol') || '').trim();
+
+      const asset = {
+        id: randomId(),
+        name: formData.get('assetName'),
+        type: assetClass,
+        kind: 'investment',
+        quantity,
+        pricePerUnit: Number.isFinite(manualPrice) ? manualPrice : undefined,
+        symbol,
+        currency: formData.get('assetCurrency') || baseCurrencyEl.value,
+        updatedAt: Date.now()
+      };
+
+      if (fetchPriceFirst && symbol) {
+        const fetched = await fetchQuote(symbol, assetClass);
+        if (fetched?.price) {
+          asset.pricePerUnit = fetched.price;
+          asset.updatedAt = Date.now();
+          setStatus(`「${asset.name}」採用 ${fetched.source} 價格 ${asset.pricePerUnit}`);
+        } else {
+          setStatus(`無法取得「${asset.name}」最新價格，保留原始（手動）價格`);
+        }
       }
 
-      for (let day = 1; day <= totalDays; day++) {
-        const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const dateObj = new Date(year, month - 1, day);
-        const dayEl = document.createElement('div');
-        dayEl.className = 'day';
+      if (!asset.pricePerUnit && asset.pricePerUnit !== 0) {
+        setStatus(`尚未設定價格，請於資產表中輸入單價後點「套用價格」`);
+      }
 
-        if (isWeekend(year, month, day) || extraHolidays.includes(dateStr)) {
-          dayEl.classList.add('holiday');
+      state.assets.push(asset);
+      persist();
+    }
+
+    function addExpense(formData) {
+      const expense = {
+        id: randomId(),
+        date: formData.get('expenseDate'),
+        category: formData.get('expenseCategory'),
+        description: formData.get('expenseDesc'),
+        amount: Number(formData.get('expenseAmount')),
+        currency: formData.get('expenseCurrency') || baseCurrencyEl.value
+      };
+      state.expenses.push(expense);
+      persist();
+      setStatus(`已紀錄費用「${expense.description}」`);
+    }
+
+    async function fetchQuote(symbol, assetClass) {
+      const normalized = symbol.trim().toUpperCase();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const result = { price: null, source: null };
+
+      try {
+        if (assetClass === 'stock' || assetClass === 'other') {
+          const apiUrl = `https://stooq.pl/q/l/?s=${normalized.toLowerCase()}&f=sd2t2ohlcv&h&e=json`;
+          const res = await fetch(apiUrl, { signal: controller.signal });
+          if (res.ok) {
+            const json = await res.json();
+            const close = Number(json?.[0]?.close);
+            if (Number.isFinite(close)) {
+              result.price = close;
+              result.source = 'Stooq';
+            }
+          }
         }
 
-        const label = document.createElement('div');
-        label.textContent = day;
-        dayEl.appendChild(label);
-
-        const ta = document.createElement('textarea');
-        ta.value = loadNote(dateStr);
-        ta.onchange = () => saveNote(dateStr, ta.value);
-        dayEl.appendChild(ta);
-
-        cal.appendChild(dayEl);
+        if (assetClass === 'fx') {
+          const [base, quote] = normalized.split('/');
+          if (base && quote) {
+            const apiUrl = `https://open.er-api.com/v6/latest/${base}`;
+            const res = await fetch(apiUrl, { signal: controller.signal });
+            if (res.ok) {
+              const data = await res.json();
+              const rate = data?.rates?.[quote];
+              if (rate) {
+                result.price = Number(rate);
+                result.source = 'ExchangeRate-API';
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('行情抓取失敗，可能受限於網路或代理', err);
+      } finally {
+        clearTimeout(timeout);
       }
 
-      monthDiv.appendChild(cal);
-      calendarEl.appendChild(monthDiv);
+      if (!result.price) {
+        const fallback = assetClass === 'fx' ? demoPrices.fx[normalized] : demoPrices.stock[normalized];
+        if (fallback) {
+          result.price = fallback;
+          result.source = '示範價（離線）';
+        }
+      }
+
+      return result.price ? result : null;
     }
 
-    for (let m = 1; m <= 12; m++) {
-      createMonth(m, 2025);
+    async function refreshAssetPrice(assetId) {
+      const asset = state.assets.find(a => a.id === assetId);
+      if (!asset || !asset.symbol) {
+        setStatus('找不到資產或未填寫代號');
+        return;
+      }
+
+      setStatus(`嘗試更新 ${asset.name} 的最新價格…`);
+      const fetched = await fetchQuote(asset.symbol, asset.type);
+      if (fetched?.price) {
+        asset.pricePerUnit = fetched.price;
+        asset.updatedAt = Date.now();
+        persist();
+        setStatus(`已更新 ${asset.name} 價格為 ${fetched.price}（${fetched.source}）`);
+      } else {
+        setStatus('未取得價格，請檢查代號或網路環境');
+      }
     }
+
+    function applyManualPrice(assetId) {
+      const input = document.querySelector(`input.price-input[data-id="${assetId}"]`);
+      if (!input) return;
+      const price = Number(input.value);
+      if (!Number.isFinite(price) || price < 0) {
+        setStatus('請輸入有效價格');
+        return;
+      }
+      const asset = state.assets.find(a => a.id === assetId);
+      if (!asset) return;
+      asset.pricePerUnit = price;
+      asset.updatedAt = Date.now();
+      persist();
+      setStatus(`已套用手動價格到「${asset.name}」`);
+    }
+
+    function removeAsset(assetId) {
+      state.assets = state.assets.filter(a => a.id !== assetId);
+      persist();
+      setStatus('已刪除資產');
+    }
+
+    function removeExpense(expenseId) {
+      state.expenses = state.expenses.filter(e => e.id !== expenseId);
+      persist();
+      setStatus('已刪除費用');
+    }
+
+    cashForm.addEventListener('submit', event => {
+      event.preventDefault();
+      addCashAsset(new FormData(cashForm));
+      cashForm.reset();
+    });
+
+    investmentForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      await addInvestmentAsset(new FormData(investmentForm), true);
+      investmentForm.reset();
+    });
+
+    tryFetchBtn.addEventListener('click', async () => {
+      const formData = new FormData(investmentForm);
+      const symbol = formData.get('assetSymbol');
+      if (!symbol) {
+        setStatus('請先填寫行情代號');
+        return;
+      }
+      const assetClass = formData.get('assetClass') || 'stock';
+      const fetched = await fetchQuote(symbol, assetClass);
+      if (fetched?.price) {
+        investmentForm.manualPrice.value = fetched.price;
+        setStatus(`取得價格 ${fetched.price}（${fetched.source}），可直接送出資產`);
+      } else {
+        setStatus('嘗試抓取失敗，請改用手動價格或稍後再試');
+      }
+    });
+
+    expenseForm.addEventListener('submit', event => {
+      event.preventDefault();
+      addExpense(new FormData(expenseForm));
+      expenseForm.reset();
+      expenseForm.expenseDate.valueAsDate = new Date();
+    });
+
+    assetTableBody.addEventListener('click', event => {
+      const btn = event.target.closest('button');
+      if (!btn) return;
+      const { action, id } = btn.dataset;
+      if (action === 'fetch') refreshAssetPrice(id);
+      if (action === 'applyPrice') applyManualPrice(id);
+      if (action === 'remove') removeAsset(id);
+    });
+
+    expenseTableBody.addEventListener('click', event => {
+      const btn = event.target.closest('button');
+      if (!btn) return;
+      const { action, id } = btn.dataset;
+      if (action === 'remove-expense') removeExpense(id);
+    });
+
+    refreshAllBtn.addEventListener('click', async () => {
+      const targets = state.assets.filter(a => a.kind === 'investment' && a.symbol);
+      if (!targets.length) {
+        setStatus('沒有需要更新的投資資產');
+        return;
+      }
+      setStatus(`開始批次更新 ${targets.length} 項資產…`);
+      for (const asset of targets) {
+        const fetched = await fetchQuote(asset.symbol, asset.type);
+        if (fetched?.price) {
+          asset.pricePerUnit = fetched.price;
+          asset.updatedAt = Date.now();
+        }
+      }
+      persist();
+      setStatus('批次更新完成（可能含示範價或原價）');
+    });
+
+    clearAssetsBtn.addEventListener('click', () => {
+      if (!confirm('確定要清空資產？此動作無法還原。')) return;
+      state.assets = [];
+      persist();
+      setStatus('已清空所有資產');
+    });
+
+    clearExpensesBtn.addEventListener('click', () => {
+      if (!confirm('確定要清空費用？此動作無法還原。')) return;
+      state.expenses = [];
+      persist();
+      setStatus('已清空費用');
+    });
+
+    baseCurrencyEl.addEventListener('change', renderSummary);
+
+    function bootstrap() {
+      expenseForm.expenseDate.valueAsDate = new Date();
+      render();
+      setStatus('資料已載入，可開始記帳');
+    }
+
+    bootstrap();
   </script>
 </body>
 </html>
